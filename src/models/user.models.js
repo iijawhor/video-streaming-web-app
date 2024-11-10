@@ -24,12 +24,7 @@ const userSchema = new Schema(
       trim: true,
       index: true,
     },
-    fullname: {
-      type: String,
-      required: true,
-      trim: true,
-      index: true,
-    },
+
     avatar: {
       type: String, //cloudnary url -- where files are uploaded
       required: true,
@@ -58,6 +53,7 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
+
 userSchema.methods.generateAccessToken = function () {
   jwt.sign(
     {
@@ -83,4 +79,5 @@ userSchema.methods.generateRefreshToken = function () {
     }
   );
 };
+
 export const User = mongoose.model("User", userSchema);

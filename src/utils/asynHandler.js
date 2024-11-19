@@ -14,8 +14,7 @@ export { asyncHandler };
 //         console.log();
 //         res.status(error.code|| 500).json({
 //             success:false,
-//             message:er.message
+//             message:error.message
 //         })
-
 //     }
 // }

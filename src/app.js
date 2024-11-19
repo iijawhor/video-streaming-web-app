@@ -16,6 +16,7 @@ app.use(cookieParser());
 
 //routes-----------import
 import userRouter from "./routes/user.routes.js";
+import { uploadOnCloudinary } from "./utils/cloudinary.js";
 
 //routes declaration
 app.use("/api/v1/users", userRouter);

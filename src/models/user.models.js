@@ -2,6 +2,7 @@ import mongoose, { Schema } from "mongoose";
 // import {jwt} from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 const userSchema = new Schema(
   {
     username: {

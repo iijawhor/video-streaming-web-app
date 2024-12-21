@@ -1,7 +1,10 @@
 import { asyncHandler } from "../utils/asynHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  oldImageToBeDeleted,
+  uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -226,6 +229,30 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
 });
+// delete the old image
+const deleteOldAvatar = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id);
+  if (!user || !user.avatar) {
+    throw new ApiError(
+      400,
+      "User or avatar not found when attempting to delete the old avatar."
+    );
+  }
+  const { avatar } = user;
+  const imageUrl = avatar?.url;
+
+  const publicId = imageUrl.split("/").pop().split(".")[0];
+
+  if (!publicId) {
+    throw new ApiError(400, "Public id did not exist!");
+  }
+
+  await oldImageToBeDeleted(publicId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Old avatar is deleted successfully"));
+});
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullname, email, username } = req.body;
@@ -254,7 +281,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Avatar file missing");
   }
 
-  const avatar = uploadOnCloudinary(avatarLocalPath);
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
   if (!avatar.url) {
     throw new ApiError(400, "Error while editing avatar");
   }
@@ -262,7 +289,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
-      set: {
+      $set: {
         avatar: avatar.url,
       },
     },
@@ -278,7 +305,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Avatar file missing");
   }
 
-  const coverImage = uploadOnCloudinary(coverImageLocalPath);
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
   if (!coverImage.url) {
     throw new ApiError(400, "Error while uploading cover image");
   }
@@ -308,4 +335,5 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  deleteOldAvatar,
 };

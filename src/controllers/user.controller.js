@@ -229,31 +229,6 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
 });
-// delete the old image
-const deleteOldAvatar = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user?._id);
-  if (!user || !user.avatar) {
-    throw new ApiError(
-      400,
-      "User or avatar not found when attempting to delete the old avatar."
-    );
-  }
-  const { avatar } = user;
-  const imageUrl = avatar?.url;
-
-  const publicId = imageUrl.split("/").pop().split(".")[0];
-
-  if (!publicId) {
-    throw new ApiError(400, "Public id did not exist!");
-  }
-
-  await oldImageToBeDeleted(publicId);
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, "Old avatar is deleted successfully"));
-});
-
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullname, email, username } = req.body;
   if (!fullname || !email) {
@@ -295,6 +270,15 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     },
     { new: true }
   ).select("-password");
+
+  const oldAvatarUrl = user.avatar?.url;
+
+  if (oldAvatarUrl) {
+    const publicId = oldAvatarUrl.split("/").pop().split(".")[0];
+    await oldImageToBeDeleted(publicId).catch((err) =>
+      console.error("Failed to delete old avatar:", err)
+    );
+  }
   return res
     .status(200)
     .json(new ApiResponse(200, user, "avatar image uploaded successfully"));

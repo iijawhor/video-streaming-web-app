@@ -297,13 +297,21 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
-      set: {
+      $set: {
         coverImage: coverImage.url,
       },
     },
     { new: true }
   ).select("-password");
 
+  // Old coverImage deletion
+  const oldCoverImageUrl = user.coverImage;
+  if (oldCoverImageUrl) {
+    const publicId = oldCoverImageUrl.split("/").pop().split(".")[0];
+    await oldImageToBeDeleted(publicId).catch((err) =>
+      console.error("Failed to delete old avatar:", err)
+    );
+  }
   return res
     .status(200)
     .json(new ApiResponse(200, user, "cover image uploaded successfully"));
